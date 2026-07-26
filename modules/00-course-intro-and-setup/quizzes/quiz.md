@@ -1,6 +1,6 @@
 # Quiz — Module 00 (10 questions)
 
-Pass mark: 80% (8/10). Answers in `answers.md`.
+Pass mark: 80% (8/10).
 
 1. What is the primary reason we keep `.env` out of Git but commit `.env.example`?
 2. Inside the Docker network, what hostname should an n8n node use to reach Qdrant, and why not `localhost`?

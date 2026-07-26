@@ -29,7 +29,7 @@ By the end of this module a learner can:
 
 | Time | Segment | Activity |
 |------|---------|----------|
-| 0:00–0:10 | Welcome & two-stage path | Slides 1–5: learn automation, then build enterprise on AWS |
+| 0:00–0:10 | Welcome & two-stage path | learn automation, then build enterprise on AWS |
 | 0:10–0:25 | Tooling overview | n8n vs code, OpenRouter, vector DB, AWS preview |
 | 0:25–0:30 | Secret hygiene | `.env`, credentials, what never to commit |
 | 0:30–1:30 | **Lab**: stand up the stack, run hello-LLM | `labs/lab.md` |
@@ -79,8 +79,7 @@ permissions**, and Qdrant becomes **OpenSearch Serverless**.
 
 ## 16. Quiz
 
-10 questions in [`quizzes/quiz.md`](quizzes/quiz.md), answers in
-[`quizzes/answers.md`](quizzes/answers.md).
+Practice questions in [`quizzes/quiz.md`](quizzes/quiz.md).
 
 ## 17. Practical assignment
 

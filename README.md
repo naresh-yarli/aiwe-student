@@ -4,13 +4,9 @@
 > enterprise AI workflow platform on **AWS**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Released modules](https://img.shields.io/badge/released-1-brightgreen.svg)](RELEASE_STATUS.md)
+[![Released modules](https://img.shields.io/badge/released-1-brightgreen.svg)](README.md)
 
-This is the **public student repository**. It contains labs, workflows, diagrams, and
-assignments for modules that have been released. Instructor voice-over scripts and quiz
-answer keys stay in the private authoring repo.
-
-**Release status:** see [`RELEASE_STATUS.md`](RELEASE_STATUS.md) (last publish: 2026-07-26T02:25:18.228Z).
+Labs, workflows, diagrams, quizzes, and assignments for **released** modules.
 
 ---
 
@@ -56,18 +52,16 @@ npm run validate
 
 ```text
 .
-├── README.md / RELEASE_STATUS.md / SYLLABUS.md
-├── CONVENTIONS.md
+├── README.md / SYLLABUS.md / LICENSE
 ├── .env.example
 ├── shared/                 # Prompts, sub-workflows, datasets, helpers
 └── modules/<nn>-name/      # Released modules only
     ├── README.md
     ├── labs/
     ├── assets/
-    ├── diagrams/           # PNG diagrams (rendered at release)
+    ├── diagrams/           # PNG diagrams
     ├── workflow-json/
-    ├── prompt-library/
-    ├── quizzes/quiz.md     # Questions only (no answer key)
+    ├── quizzes/quiz.md
     ├── assignments/
     └── enterprise-notes/
 ```
