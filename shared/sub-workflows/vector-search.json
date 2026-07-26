@@ -1,0 +1,66 @@
+{
+  "name": "shared/vector-search",
+  "nodes": [
+    {
+      "parameters": { "inputSource": "passthrough" },
+      "id": "vs-trigger",
+      "name": "When called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contract (input): { vector: number[], topK?, filter? }\nconst i = $json || {};\nif (!Array.isArray(i.vector)) throw new Error('vector-search: `vector` (number[]) is required');\nconst body = { vector: i.vector, limit: i.topK || 5, with_payload: true };\nif (i.filter) body.filter = i.filter;\nreturn [{ json: { body } }];"
+      },
+      "id": "vs-build",
+      "name": "Build query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.QDRANT_URL }}/collections/{{ $env.QDRANT_COLLECTION }}/points/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-key", "value": "={{ $env.QDRANT_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "vs-http",
+      "name": "Qdrant search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "jsCode": "// Output contract: { matches: [{ id, score, payload }] }\nconst r = $json;\nconst matches = (r.result || []).map(m => ({ id: m.id, score: m.score, payload: m.payload }));\nreturn [{ json: { matches } }];"
+      },
+      "id": "vs-parse",
+      "name": "Shape results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "When called": { "main": [[{ "node": "Build query", "type": "main", "index": 0 }]] },
+    "Build query": { "main": [[{ "node": "Qdrant search", "type": "main", "index": 0 }]] },
+    "Qdrant search": { "main": [[{ "node": "Shape results", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Qdrant similarity search. OpenSearch Serverless equivalent documented in Module 11." },
+  "pinData": {}
+}

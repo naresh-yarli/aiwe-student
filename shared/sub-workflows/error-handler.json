@@ -1,0 +1,40 @@
+{
+  "name": "shared/error-handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "err-trigger",
+      "name": "On Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the error into a structured log event.\n// Never log secrets; only metadata we control.\nconst e = $json;\nconst redact = (s = '') => String(s).replace(/(sk-[A-Za-z0-9-]{6})[A-Za-z0-9-]+/g, '$1***').slice(0, 2000);\nreturn [{\n  json: {\n    level: 'error',\n    ts: new Date().toISOString(),\n    workflow: e.workflow?.name || 'unknown',\n    workflowId: e.workflow?.id || null,\n    execution: e.execution?.id || null,\n    node: e.execution?.lastNodeExecuted || null,\n    message: redact(e.execution?.error?.message || e.error?.message || 'Unknown error'),\n    stack: redact(e.execution?.error?.stack || '')\n  }\n}];"
+      },
+      "id": "err-normalize",
+      "name": "Normalize error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "content": "=Structured error event (send to CloudWatch/Datadog/Slack in production):\n{{ JSON.stringify($json, null, 2) }}"
+      },
+      "id": "err-log",
+      "name": "Log (replace with sink)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "On Error": { "main": [[{ "node": "Normalize error", "type": "main", "index": 0 }]] },
+    "Normalize error": { "main": [[{ "node": "Log (replace with sink)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Assign as the Error Workflow in every production workflow (Settings -> Error Workflow)." },
+  "pinData": {}
+}

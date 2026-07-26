@@ -1,0 +1,78 @@
+# Local lab stack for AI Workflow Engineering (Part I).
+# Usage:  docker compose --env-file ../../.env -f docker-compose.yml up -d
+# (or copy this file to the repo root and run `docker compose up -d`)
+#
+# Services: n8n (workflow engine), Postgres (n8n + app data), Qdrant (vector DB).
+# NOTE: values come from your .env at the repo root. Never hardcode secrets here.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-n8n}
+      POSTGRES_USER: ${POSTGRES_USER:-n8n}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-n8n}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # REST + dashboard at http://localhost:6333/dashboard
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # Core
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?set N8N_ENCRYPTION_KEY in .env}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-UTC}
+      # Dev-only basic auth
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-change-me}
+      # Persist to Postgres
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-n8n}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-n8n}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      # Pass through provider config so workflows can read $env.*
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_APP_URL: ${OPENROUTER_APP_URL:-http://localhost}
+      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-AIWE Course}
+      LLM_DEFAULT_MODEL: ${LLM_DEFAULT_MODEL:-openai/gpt-4o-mini}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-anthropic/claude-3.5-haiku}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-openai/text-embedding-3-small}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-course_knowledge}
+      # Allow the Code node to be used freely in the lab
+      NODE_FUNCTION_ALLOW_BUILTIN: "*"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  pgdata:
+  qdrant_storage:
+  n8n_data:

@@ -1,0 +1,66 @@
+{
+  "name": "shared/embed-text",
+  "nodes": [
+    {
+      "parameters": { "inputSource": "passthrough" },
+      "id": "emb-trigger",
+      "name": "When called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contract (input): { input: string | string[], model? }\nconst i = $json || {};\nif (!i.input) throw new Error('embed-text: `input` is required');\nreturn [{ json: { body: { model: i.model || $env.EMBEDDING_MODEL || 'openai/text-embedding-3-small', input: i.input } } }];"
+      },
+      "id": "emb-build",
+      "name": "Build request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENROUTER_BASE_URL }}/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "emb-http",
+      "name": "Call embeddings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Output contract: { vectors: number[][], model, usage }\nconst r = $json;\nconst vectors = (r.data || []).sort((a,b)=>a.index-b.index).map(d => d.embedding);\nif (!vectors.length) throw new Error('embed-text: no embeddings returned');\nreturn [{ json: { vectors, model: r.model || null, usage: r.usage || null } }];"
+      },
+      "id": "emb-parse",
+      "name": "Parse response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "When called": { "main": [[{ "node": "Build request", "type": "main", "index": 0 }]] },
+    "Build request": { "main": [[{ "node": "Call embeddings", "type": "main", "index": 0 }]] },
+    "Call embeddings": { "main": [[{ "node": "Parse response", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Provider-neutral text embeddings. Bedrock Titan equivalent documented in Module 11." },
+  "pinData": {}
+}

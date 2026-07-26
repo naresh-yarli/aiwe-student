@@ -1,0 +1,51 @@
+# Secrets & environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+aws-exports.js
+
+# n8n local data
+.n8n/
+n8n-data/
+n8n_data/
+
+# Docker volumes / local databases
+pgdata/
+qdrant_storage/
+*.sqlite
+*.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+dist/
+.build/
+
+# Python (helper scripts / Lambda packaging)
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# AWS / IaC
+.aws-sam/
+cdk.out/
+samconfig.local.toml
+*.zip
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Build & logs
+logs/
+*.log
+coverage/

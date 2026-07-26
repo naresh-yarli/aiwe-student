@@ -1,0 +1,8 @@
+{"id":"t-1001","channel":"email","subject":"Can't log in","body":"I keep getting an error when I try to log in with my Google account. It says SSO not configured. Help!","customer_tier":"team"}
+{"id":"t-1002","channel":"chat","subject":"","body":"How much does the Enterprise plan cost and does it include SAML?","customer_tier":"starter"}
+{"id":"t-1003","channel":"email","subject":"429 errors","body":"Our integration started returning 429 responses this morning around 9am. We're on the Team plan. What are the limits?","customer_tier":"team"}
+{"id":"t-1004","channel":"email","subject":"GDPR deletion request","body":"We need all data for user jsmith@client.example permanently deleted for compliance. How long does this take?","customer_tier":"enterprise"}
+{"id":"t-1005","channel":"chat","subject":"","body":"Upload keeps failing for a 500MB video on the Team plan","customer_tier":"team"}
+{"id":"t-1006","channel":"email","subject":"Refund","body":"I want a refund for my annual plan, I no longer need the service.","customer_tier":"team"}
+{"id":"t-1007","channel":"chat","subject":"","body":"Webhook signature verification is failing, what header do you sign with?","customer_tier":"enterprise"}
+{"id":"t-1008","channel":"email","subject":"Angry","body":"This is the third time your service went down this week. I am extremely frustrated and considering cancelling.","customer_tier":"team"}

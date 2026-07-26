@@ -1,0 +1,29 @@
+{
+  "name": "shared/validate-input",
+  "nodes": [
+    {
+      "parameters": { "inputSource": "passthrough" },
+      "id": "vi-trigger",
+      "name": "When called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contract (input): { payload: object, required: string[], maxLen?: number }\n// Fails fast with a clear error, otherwise passes { valid:true, payload } through.\nconst i = $json || {};\nconst payload = i.payload || {};\nconst required = i.required || [];\nconst maxLen = i.maxLen || 8000;\nconst missing = required.filter(k => payload[k] === undefined || payload[k] === null || payload[k] === '');\nif (missing.length) {\n  throw new Error('validate-input: missing required fields: ' + missing.join(', '));\n}\nfor (const [k, v] of Object.entries(payload)) {\n  if (typeof v === 'string' && v.length > maxLen) {\n    throw new Error(`validate-input: field '${k}' exceeds maxLen ${maxLen}`);\n  }\n}\nreturn [{ json: { valid: true, payload } }];"
+      },
+      "id": "vi-validate",
+      "name": "Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "When called": { "main": [[{ "node": "Validate", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Fail-fast input validation. Call first in any webhook-triggered workflow." },
+  "pinData": {}
+}

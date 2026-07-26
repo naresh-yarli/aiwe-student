@@ -1,0 +1,71 @@
+{
+  "name": "00-hello-openrouter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Run once (manual)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "question", "value": "In one sentence, what is n8n?", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-question",
+      "name": "Set question",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENROUTER_BASE_URL }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $env.LLM_DEFAULT_MODEL, messages: [ { role: 'system', content: 'You are a concise assistant.' }, { role: 'user', content: $json.question } ], temperature: 0.3 }) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "call-openrouter",
+      "name": "Call OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json;\nreturn [{ json: { answer: r.choices?.[0]?.message?.content ?? '(no content)', model: r.model, usage: r.usage } }];"
+      },
+      "id": "shape-output",
+      "name": "Shape output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Run once (manual)": { "main": [[{ "node": "Set question", "type": "main", "index": 0 }]] },
+    "Set question": { "main": [[{ "node": "Call OpenRouter", "type": "main", "index": 0 }]] },
+    "Call OpenRouter": { "main": [[{ "node": "Shape output", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "First run: prove OpenRouter connectivity from n8n." },
+  "pinData": {}
+}

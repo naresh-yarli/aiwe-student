@@ -1,0 +1,15 @@
+{
+  "name": "ai-workflow-engineering",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Workflow Engineering — From n8n to Enterprise AI on AWS. Course repository.",
+  "type": "module",
+  "scripts": {
+    "validate": "node shared/scripts/validate-workflows.mjs",
+    "publish:public": "node scripts/publish-public.mjs",
+    "publish:status": "node scripts/publish-public.mjs --status",
+    "publish:release": "node scripts/publish-public.mjs --release",
+    "publish:unrelease": "node scripts/publish-public.mjs --unrelease"
+  },
+  "license": "MIT"
+}

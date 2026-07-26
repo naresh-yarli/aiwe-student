@@ -1,0 +1,31 @@
+{
+  "name": "shared/log-event",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "log-trigger",
+      "name": "When called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contract (input): { level, event, correlationId, attrs }\n// Emits a normalized, secret-safe log line. Swap the sink for CloudWatch/Datadog/Loki.\nconst redact = (v) => {\n  if (typeof v !== 'string') return v;\n  return v.replace(/(sk-[A-Za-z0-9-]{6})[A-Za-z0-9-]+/g, '$1***')\n          .replace(/AKIA[0-9A-Z]{16}/g, 'AKIA****');\n};\nconst input = $json || {};\nconst safeAttrs = {};\nfor (const [k, val] of Object.entries(input.attrs || {})) safeAttrs[k] = redact(val);\nconst record = {\n  ts: new Date().toISOString(),\n  level: input.level || 'info',\n  event: input.event || 'unspecified',\n  correlationId: input.correlationId || null,\n  attrs: safeAttrs\n};\nconsole.log(JSON.stringify(record));\nreturn [{ json: record }];"
+      },
+      "id": "log-normalize",
+      "name": "Normalize & emit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "When called": { "main": [[{ "node": "Normalize & emit", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Reusable structured logger. Call via Execute Workflow with { level, event, correlationId, attrs }." },
+  "pinData": {}
+}

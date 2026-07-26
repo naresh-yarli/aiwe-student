@@ -1,0 +1,82 @@
+{
+  "name": "shared/llm-complete",
+  "nodes": [
+    {
+      "parameters": { "inputSource": "passthrough" },
+      "id": "llm-trigger",
+      "name": "When called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contract (input): { system, user, model?, temperature?, max_tokens?, json?:bool }\n// Provider-neutral shape; body follows OpenAI/OpenRouter chat schema.\nconst i = $json || {};\nif (!i.user) throw new Error('llm-complete: `user` is required');\nconst messages = [];\nif (i.system) messages.push({ role: 'system', content: String(i.system) });\nmessages.push({ role: 'user', content: String(i.user) });\nconst body = {\n  model: i.model || $env.LLM_DEFAULT_MODEL || 'openai/gpt-4o-mini',\n  messages,\n  temperature: i.temperature ?? 0.2,\n  max_tokens: i.max_tokens ?? 1024\n};\nif (i.json) body.response_format = { type: 'json_object' };\nreturn [{ json: { body } }];"
+      },
+      "id": "llm-build",
+      "name": "Build request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENROUTER_BASE_URL }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENROUTER_API_KEY }}" },
+            { "name": "HTTP-Referer", "value": "={{ $env.OPENROUTER_APP_URL }}" },
+            { "name": "X-Title", "value": "={{ $env.OPENROUTER_APP_TITLE }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "llm-http",
+      "name": "Call OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Output contract: { content, model, usage, raw }\nconst r = $json;\nconst choice = r.choices && r.choices[0];\nif (!choice) throw new Error('llm-complete: no choices in response: ' + JSON.stringify(r).slice(0,500));\nreturn [{ json: {\n  content: choice.message?.content ?? '',\n  model: r.model || null,\n  usage: r.usage || null,\n  finish_reason: choice.finish_reason || null\n}}];"
+      },
+      "id": "llm-parse",
+      "name": "Parse response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Error output branch: surface a clean error to the caller.\nreturn [{ json: { error: true, message: 'LLM call failed after retries', detail: ($json.error?.message || 'unknown') } }];"
+      },
+      "id": "llm-error",
+      "name": "Handle failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 400]
+    }
+  ],
+  "connections": {
+    "When called": { "main": [[{ "node": "Build request", "type": "main", "index": 0 }]] },
+    "Build request": { "main": [[{ "node": "Call OpenRouter", "type": "main", "index": 0 }]] },
+    "Call OpenRouter": { "main": [
+      [{ "node": "Parse response", "type": "main", "index": 0 }],
+      [{ "node": "Handle failure", "type": "main", "index": 0 }]
+    ] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "courseVersion": "1.0.0", "description": "Provider-neutral LLM completion. Swap the HTTP node for AWS Bedrock in Part II without changing callers (Dependency Inversion)." },
+  "pinData": {}
+}
